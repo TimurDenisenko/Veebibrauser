@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,23 +13,53 @@ namespace Veebibrauser
         private Stack<string> _forward = new Stack<string>();
         private List<string> _history = new List<string>();
         private List<string> _bookmarks = new List<string>();
-        private string _homeurl;
+        private string _homeurl = "1";
         private string _current;
+
+        public Browser(string url)
+        {
+            _homeurl = url;
+            Home();
+        }
 
         public Browser()
         {
-            _homeurl = "google.com";
-            Home();
+
         }
 
         public void Home()
         {
+            Console.Clear();
+            if (_homeurl == "1")
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Viga!");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.ReadLine();
+                return;
+            }
             GoTo(_homeurl);
         }
 
-        public void SetHomePage(string url)
-        { 
-            _homeurl = url;
+        public void SetHomePage()
+        {
+            Console.Clear();
+            Console.WriteLine("Kirjutage link");
+            string url = Console.ReadLine();
+            if (ControllUrl(url))
+            {
+                _homeurl = url;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Avaleht lisatud!");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Vale link!");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.ReadLine();
+            }
         }
 
         public bool isAlph(string url)
@@ -52,47 +83,136 @@ namespace Veebibrauser
             return true;
         }
 
-        public bool ControlUrl(string url)
+        public void GoTo()
         {
-            return (url.EndsWith(".com") || url.EndsWith(".ee") || url.EndsWith(".org") || url.EndsWith(".net") || url.EndsWith(".edu"))
-                    && !url.StartsWith("https") && !url.StartsWith("www")  && isAlph(url);
-        }
-
-        public void GoTo(string url)
-        {
-            if ((url.EndsWith(".com") || url.EndsWith(".ee") || url.EndsWith(".org") || url.EndsWith(".net") || url.EndsWith(".edu"))
-                && !url.StartsWith("https") && !url.StartsWith("www")  && isAlph(url))
+            Console.Clear();
+            Console.WriteLine("Kirjutage link");
+            string url = Console.ReadLine();
+            if (ControllUrl(url))
             {
                 _back.Push(_current);
                 _current = url;
                 _forward.Clear();
                 _history.Add(url);
+                Console.Clear();
+                if (url != _homeurl && !_bookmarks.Contains(url))
+                {
+                    Console.WriteLine("<- + ->  Enter");
+                }
+                else
+                {
+                    Console.WriteLine("<-  ->  Enter");
+                }
+                Current();
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                switch (keyInfo.Key)
+                {
+                    case ConsoleKey.LeftArrow:
+                        Back();
+                        break;
+                    case ConsoleKey.RightArrow:
+                        Forward();
+                        break;
+                    case ConsoleKey.Add:
+                        _bookmarks.Add(url);
+                        GoTo(url);
+                        break;
+                    case ConsoleKey.Enter:
+                        GoTo();
+                        break;
+                }
             }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Vale link!");
                 Console.ForegroundColor = ConsoleColor.White;
+                Console.ReadLine();
+            }
+        }
+
+        public void GoTo(string url)
+        {
+            Console.Clear();
+            if (ControllUrl(url))
+            {
+                _back.Push(_current);
+                _current = url;
+                _forward.Clear();
+                Console.WriteLine("<-  -> Enter");
+                Current();
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                switch (keyInfo.Key)
+                {
+                    case ConsoleKey.LeftArrow:
+                        Back();
+                        break;
+                    case ConsoleKey.RightArrow:
+                        Forward();
+                        break;
+                    case ConsoleKey.Enter:
+                        GoTo();
+                        break;
+                }
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Vale link!");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.ReadLine();
             }
         }
 
         public void Back()
         {
+            Console.Clear();
             if (_back.Count > 0)
             {
                 _forward.Push(_current);
                 _current = _back.Pop();
                 _history.Add(_current);
+                Console.WriteLine("<-  -> Enter");
+                Current();
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                switch (keyInfo.Key)
+                {
+                    case ConsoleKey.LeftArrow:
+                        Back();
+                        break;
+                    case ConsoleKey.RightArrow:
+                        Forward();
+                        break;
+                    case ConsoleKey.Enter:
+                        GoTo();
+                        break;
+                }
             }
         }
 
         public void Forward()
         {
+            Console.Clear();
             if (_forward.Count > 0)
             {
                 _back.Push(_current);
                 _current = _forward.Pop();
                 _history.Add(_current);
+                Console.WriteLine("<-  -> Enter");
+                Current();
+                ConsoleKeyInfo keyInfo = Console.ReadKey();
+                switch (keyInfo.Key)
+                {
+                    case ConsoleKey.LeftArrow:
+                        Back();
+                        break;
+                    case ConsoleKey.RightArrow:
+                        Forward();
+                        break;
+                    case ConsoleKey.Enter:
+                        GoTo();
+                        break;
+                }
             }
         }
 
@@ -106,9 +226,16 @@ namespace Veebibrauser
             return _history;
         }
 
+        public void ShowHistory()
+        {
+            Console.Clear();
+            Console.WriteLine(string.Join("\n", _history));
+            Console.ReadLine();
+        }
+
         public void MostVisited()
         {
-            Console.WriteLine();
+            Console.Clear();
             string urlMax = "";
             int urlMaxInt = 0;
             List<string> urlMaxList = new List<string>();
@@ -133,19 +260,38 @@ namespace Veebibrauser
                 }
                 catch (Exception)
                 {
+                    Console.ReadLine();
                     return;
                 }
             }
+            Console.ReadLine();
         }
 
         public void AddBookmark(string url) 
         {
-            _bookmarks.Add(url);
+            if (ControllUrl(url))
+            {
+                _bookmarks.Add(url);
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Vale link!");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
         }
 
         public void ShowBookmarks()
         {
-            Console.WriteLine(string.Join(", ", _bookmarks));
+            Console.Clear();
+            Console.WriteLine(string.Join("\n", _bookmarks));
+            Console.ReadLine();
+        }
+
+        public bool ControllUrl(string url)
+        {
+                return ((url.EndsWith(".com") || url.EndsWith(".ee") || url.EndsWith(".org") || url.EndsWith(".net") || url.EndsWith(".edu") || url.EndsWith(".ru"))
+                     && !url.StartsWith("https") && !url.StartsWith("www") && isAlph(url));
         }
     }
 }
